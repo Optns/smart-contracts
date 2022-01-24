@@ -18,7 +18,7 @@ contract SellPutOptn is ISellOptn, Access {
     event Deposit(address indexed _contract, address indexed _from,  address indexed _to, uint256 _amount);
     event Withdraw(address indexed _contract, address indexed _to, uint256 _amount);
 
-    function viewOptn() public view returns(Optn memory optn) {
+    function viewOptn() external view returns(Optn memory optn) {
         return _optn;
     }
 
@@ -51,13 +51,13 @@ contract SellPutOptn is ISellOptn, Access {
         return response;
     }
 
-    function _initializeBlock() private {
-        _initializationBlock = block.number;
-    }
-
     function executeOptn() external onlyBuyer {
         // calculate profit
 
+    }
+
+    function _initializeBlock() private {
+        _initializationBlock = block.number;
     }
     
     function _withdraw(address to, uint256 amount) private returns(bool) {
