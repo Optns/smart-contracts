@@ -2,7 +2,10 @@
 
 This project contains smart contract for buying and selling optns contract along with Optns ERC20 token standard contract
 
-Run npm install to download dependencies.
+Run following commands 
+
+npm install -g hardhat
+npm install
 
 Try running some of the following tasks:
 
