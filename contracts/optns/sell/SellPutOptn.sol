@@ -5,7 +5,7 @@ import "./structures/Optn.sol";
 import "./../utils/Access.sol";
 
 /**
- * @dev Implementation of the {ISellOptn} interface
+ * @dev Implementation of the {ISellOptn} interface.
  */
 contract SellPutOptn is ISellOptn, Access {
     Optn _optn;
