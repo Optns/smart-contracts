@@ -24,11 +24,11 @@ contract Access {
         _;
     }
 
-    function getSeller() external view returns(address seller) {
+    function seller() external view returns(address) {
         return _seller;
     }
 
-    function getBuyer() external view returns(address seller) {
+    function buyer() external view returns(address) {
         return _buyer;
     }
 
