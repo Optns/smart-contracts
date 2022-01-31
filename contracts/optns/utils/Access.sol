@@ -2,38 +2,38 @@
 pragma solidity ^0.8.0;
 
 contract Access {
-    address _seller;
-    address _buyer;
+    address internal seller;
+    address internal buyer;
     
     constructor() {
-        _seller = msg.sender;
+        seller = msg.sender;
     }
 
     modifier onlySeller() {
-        require(_seller == msg.sender, "Access: caller is not seller");
+        require(seller == msg.sender, "Access: caller is not seller");
         _;
     }
 
     modifier onlyBuyer() {
-        require(_buyer == msg.sender, "Access: caller is not buyer");
+        require(buyer == msg.sender, "Access: caller is not buyer");
         _;
     }
 
     modifier onlyNullBuyer() {
-        require(_buyer == address(0), "Access: buyer found");
+        require(buyer == address(0), "Access: buyer found");
         _;
     }
 
-    function seller() external view returns(address) {
-        return _seller;
+    function getSeller() external view returns(address) {
+        return seller;
     }
 
-    function buyer() external view returns(address) {
-        return _buyer;
+    function getBuyer() external view returns(address) {
+        return buyer;
     }
 
     function setBuyer() internal {
-        _buyer = msg.sender;
+        buyer = msg.sender;
     }
 
 }

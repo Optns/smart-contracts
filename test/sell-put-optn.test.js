@@ -14,7 +14,7 @@ beforeEach("distribute test token", async () => {
 beforeEach("create sell put option contract", async () => {
     this.SellPutOption = await ethers.getContractFactory("SellPutOptn")
     this.contractParams = {
-        durationInBlock: 1000,
+        durationInBlock: 1,
         premium: 15,
         strikePrice: 20,
         token: this.token.address 
@@ -46,7 +46,7 @@ it("check contract optn param", async () => {
 })
 
 it("check ownership", async () => {
-    assert.equal(this.owner.address, await this.sellPutOption.seller())
+    assert.equal(this.owner.address, await this.sellPutOption.getSeller())
 })
 
 it("teriminate contract", () => {
@@ -74,7 +74,7 @@ it("teriminate contract", () => {
 
 it("pay premium", () => {
     describe("pay premium", () => {
-        before("paying premium", async () => {
+        beforeEach("paying premium", async () => {
             this.ownerInitialUsdBalance = await this.tusd.balanceOf(this.owner.address)
     
             await this.tusd.connect(this.holder1)
@@ -91,10 +91,30 @@ it("pay premium", () => {
                 this.ownerInitialUsdBalance.add(this.contractParams.premium).toString()
             )
         })
+
+        it("check buyer", async () => {
+            const buyer = await this.sellPutOption.getBuyer()
+            assert.equal(buyer, this.holder1.address)
+        })
     
         it("terminating sold contract", async () => {
             //expect(await this.sellPutOption.terminateContract()).to.be.an('Error')
         })  
+
+        it("expire contract", () => {
+            describe("expire contract", () => {
+                beforeEach("expire", async () => {
+                    this.ownerInitialBalance = await this.token.balanceOf(this.owner.address)
+                    this.contractInitialBalance = await this.token.balanceOf(this.sellPutOption.address)
+                    await this.sellPutOption.expireContract();
+                    this.ownerFinalBalance = await this.token.balanceOf(this.owner.address)
+                })
+
+                it("check if owner credited after expiry", () => {
+                    assert.equal(this.ownerFinalBalance.toString(), this.ownerInitialBalance.add(this.contractInitialBalance).toString())
+                })
+            })
+        })
     })
 })
 
