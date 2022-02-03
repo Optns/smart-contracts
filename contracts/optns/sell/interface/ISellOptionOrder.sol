@@ -1,7 +1,11 @@
-//SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "./../../Optn.sol";
 
-interface ISellOption {
+interface ISellOptionOrder {
+
+    function __sellOption_init(Optn memory optn, address usdAddress, address oracle, address tokenAddress, address seller) external;
+
     function escrowFunds(uint256) external;
 
     function terminateContract() external;
