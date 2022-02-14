@@ -3,66 +3,69 @@ pragma solidity ^0.8.0;
 
 import "./OptionOrder.sol";
 import "./interface/ISellOptionOrder.sol";
+import "./interface/ISellOptionFactory.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract SellCallOpttionOrder is ISellOptionOrder, OptionOrder, Initializable {
+contract SellCallOptionOrder is ISellOptionOrder, OptionOrder, Initializable {
 
-    IERC20 private _baseCurrency; 
-    IERC20 private _token;
-    AggregatorV3Interface private _priceFeed;
+    ISellOptionFactory private _orderbook;
 
     function __sellOption_init(
         Optn memory optn,
-        address baseCurrency,
-        address oracle,
-        address tokenAddress,
-        address seller
-    ) external initializer {
+        address seller,
+        address orderbook
+    ) external override initializer {
         __option_init(optn, seller);
-        _priceFeed = AggregatorV3Interface(oracle);
-        _baseCurrency = IERC20(baseCurrency);
-        _token = IERC20(tokenAddress);
+        _orderbook = ISellOptionFactory(orderbook);
     }
 
-    function escrowFunds(uint256 funds) external override onlySeller {
+    function escrow(uint256 funds) external override onlySeller {
         require(funds > 0, "Amount: amount should be > 0");
-        deposit(msg.sender, address(this), funds, _baseCurrency);
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+        deposit(msg.sender, address(this), funds, baseCurrency);
         emit Escrow(address(this), funds);
     }
 
-    function terminateContract() external override onlySeller onlyNullBuyer {
-        uint256 contractBalance = _baseCurrency.balanceOf(address(this));
+    function terminate() external override onlySeller onlyNullBuyer {
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+        uint256 contractBalance = baseCurrency.balanceOf(address(this));
         require(contractBalance > 0, "Balance: zero balance in contract");
-        withdraw(seller, contractBalance, _baseCurrency);
+        withdraw(seller, contractBalance, baseCurrency);
         emit Terminate(address(this));
     }
 
     function payPremium() external override onlyNullBuyer {
-        deposit(msg.sender, seller, optn.premium, _baseCurrency);
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+        deposit(msg.sender, seller, optn.premium, baseCurrency);
         setBuyer();
         initializeBlock();
         emit Premium(address(this));
     }
 
-    function expireContract() external override onlySeller {
+    function expire() external override onlySeller {
         require(optn.durationInBlock < block.number - initializationBlock);
-        uint256 contractBalance = _baseCurrency.balanceOf(address(this));
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+        uint256 contractBalance = baseCurrency.balanceOf(address(this));
         require(contractBalance > 0, "Balance: zero balance in contract");
-        withdraw(seller, contractBalance, _baseCurrency);
+        withdraw(seller, contractBalance, baseCurrency);
         emit Expire(address(this));
     }
 
-    function executeOption() external override onlyBuyer {
-        int currentPrice = getLatestPrice(_priceFeed);
+    function execute() external override onlyBuyer {
+        int currentPrice = _orderbook.latestPrice();
 
         require(currentPrice > 0, "price lesser than zerp");        
         require(currentPrice > optn.strikePrice, "current price lesser than strike price");
 
-        uint256 contractBalance = _token.balanceOf(address(this));
+        IERC20 token = _orderbook.getToken();
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+
+        uint256 contractBalance = token.balanceOf(address(this));
         uint256 tokenCount = optn.amount / uint(optn.strikePrice);
-        deposit(buyer, seller, tokenCount, IERC20(_token));
-        withdraw(buyer, contractBalance, _baseCurrency);
+        
+        deposit(buyer, seller, tokenCount, IERC20(token));
+        withdraw(buyer, contractBalance, baseCurrency);
         emit Execute(address(0));
     }
 }

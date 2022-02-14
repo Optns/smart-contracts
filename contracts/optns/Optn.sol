@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IERC20.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 struct Optn {
     uint256 durationInBlock;
@@ -15,4 +16,12 @@ struct Order {
     address seller;
     address buyer;
     uint256 initializationBlock;
+}
+
+struct OrderBookStandard {
+    address sellPutImp;
+    address sellCallImp;
+    address baseCurrency;
+    address oracle;
+    address token;
 }

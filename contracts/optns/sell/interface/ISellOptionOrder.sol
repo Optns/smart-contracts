@@ -4,15 +4,15 @@ import "./../../Optn.sol";
 
 interface ISellOptionOrder {
 
-    function __sellOption_init(Optn memory optn, address usdAddress, address oracle, address tokenAddress, address seller) external;
+    function __sellOption_init(Optn memory optn, address seller, address orderbook) external;
 
-    function escrowFunds(uint256) external;
+    function escrow(uint256) external;
 
-    function terminateContract() external;
+    function terminate() external;
 
     function payPremium() external;
 
-    function expireContract() external;
+    function expire() external;
     
-    function executeOption() external;
+    function execute() external;
 }

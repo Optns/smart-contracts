@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./../Optn.sol";
 import "./SellPutOptionOrder.sol";
 import "./SellCallOptionOrder.sol";
@@ -13,41 +14,52 @@ contract SellOptionFactory is ISellOptionFactory, Initializable {
     address private _sellPutImp;
     address private _sellCallImp;
     address private _baseCurrency;
-    address private _oracle;
     address private _token;
+    AggregatorV3Interface private _priceFeed;
 
-    mapping(address => address) private putOrders;
-    mapping(address => address) private callOrders;
+    // list of contracts
+    address[] private putOrders;
+    address[] private callOrders;
 
-    function __sellOptionFactory_init(address baseCurrency, address oracle, address token)
-        external
-        initializer {
-        _baseCurrency = baseCurrency; 
-        _oracle = oracle;
-        _token = token;
+    function __sellOptionFactory_init(OrderBookStandard memory orderBookStandard) override external initializer {
+        _priceFeed = AggregatorV3Interface(orderBookStandard.oracle);
+        _sellPutImp = orderBookStandard.sellPutImp;
+        _sellCallImp = orderBookStandard.sellCallImp;
+        _baseCurrency = orderBookStandard.baseCurrency;
+        _token = orderBookStandard.token;
     }
 
-    function setSellPutImp(address imp) external {
-        require(_sellPutImp == address(0), "Implementation already defined");
-        _sellPutImp = imp;
+    function getToken() external override view returns(IERC20){
+        return IERC20(_token);
     }
 
-    function setSellCallImp(address imp) external {
-        require(_sellCallImp == address(0), "Implementation already defined");
-        _sellCallImp = imp;
+    function getBaseCurrency() external override view returns(IERC20){ 
+        return IERC20(_baseCurrency);
     }
 
-    function cloneSellPutContract(Optn memory optn, address seller) external {
+    function latestPrice() override external view returns (int) {
+        (
+            , 
+            int price,
+            ,
+            ,
+        ) = _priceFeed.latestRoundData();
+        return price;
+    }
+
+    function cloneSellPutContract(Optn memory optn, address seller) external override returns(bool){
         address sellPutOptionAddress = ClonesUpgradeable.clone(_sellPutImp);
         ISellOptionOrder sellPutOption = ISellOptionOrder(sellPutOptionAddress);
-        sellPutOption.__sellOption_init(optn, _baseCurrency, _oracle, _token, seller);
-        putOrders[sellPutOptionAddress] = msg.sender;
+        sellPutOption.__sellOption_init(optn, seller, address(this));
+        putOrders.push(sellPutOptionAddress);
+        return true;
     }
 
-    function cloneCallPutContract(Optn memory optn, address seller) external {
+    function cloneCallPutContract(Optn memory optn, address seller) external override returns(bool){
         address sellCallOptionAddress = ClonesUpgradeable.clone(_sellCallImp);
         ISellOptionOrder sellCallOption = ISellOptionOrder(sellCallOptionAddress);
-        sellCallOption.__sellOption_init(optn, _baseCurrency, _oracle, _token, seller);
-        callOrders[sellCallOptionAddress] = msg.sender;
+        sellCallOption.__sellOption_init(optn, seller, address(this));
+        callOrders.push(sellCallOptionAddress);
+        return true;
     }
 }

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 import "./interface/IOptionOrder.sol";
 import "./../Optn.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /**
  * @dev Implementation of the { IOptn } interface.
@@ -14,7 +13,7 @@ abstract contract OptionOrder is IOptionOrder {
     address internal seller;
     address internal buyer;
 
-    function __option_init(Optn memory _optn, address _seller) internal{
+    function __option_init(Optn memory _optn, address _seller) internal {
         seller = _seller;
         optn = _optn;
         initializationBlock = 0;
@@ -53,12 +52,11 @@ abstract contract OptionOrder is IOptionOrder {
         buyer = msg.sender;
     }
 
-    function viewOrder() external view returns(Order memory) {
-        Order memory order = Order(optn, seller, buyer, initializationBlock);
-        return order;
+    function order() external override view returns(Order memory) {
+        return Order(optn, seller, buyer, initializationBlock);
     }
 
-    function viewInitializationBlock() external view returns(uint256){
+    function viewInitializationBlock() external override view returns(uint256){
         return initializationBlock;
     }
 
@@ -78,17 +76,6 @@ abstract contract OptionOrder is IOptionOrder {
     function deposit(address from, address to, uint256 amount, IERC20 token) internal {
         _allownace(from, amount, token);
         token.transferFrom(from, to, amount);
-    }
-
-    function getLatestPrice(AggregatorV3Interface priceFeed) internal view returns (int) {
-        (
-            uint80 roundID, 
-            int price,
-            uint startedAt,
-            uint timeStamp,
-            uint80 answeredInRound
-        ) = priceFeed.latestRoundData();
-        return price;
     }
 
     function _allownace(address from, uint256 amount, IERC20 token) private view {
