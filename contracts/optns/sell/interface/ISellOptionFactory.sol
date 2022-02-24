@@ -7,13 +7,21 @@ interface ISellOptionFactory {
         OrderBookStandard memory orderBookStandard
     ) external;
 
-    function getToken() external view returns(IERC20);
+    function getToken() external view returns (IERC20);
 
-    function getBaseCurrency() external view returns(IERC20);
+    function getBaseCurrency() external view returns (IERC20);
 
-    function latestPrice() external view returns (int);
+    function getAmount() external view returns (uint256);
 
-    function cloneSellPutContract(Optn memory optn, address seller) external returns(bool);
+    function getDurationInBlock() external view returns (uint256);
 
-    function cloneCallPutContract(Optn memory optn, address seller) external returns(bool);
+    function latestPrice() external view returns (int256);
+
+    function cloneSellPutContract(Optn memory optn, address seller)
+        external
+        returns (bool);
+
+    function cloneCallPutContract(Optn memory optn, address seller)
+        external
+        returns (bool);
 }

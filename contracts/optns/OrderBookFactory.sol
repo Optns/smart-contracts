@@ -7,26 +7,34 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./sell/interface/ISellOptionFactory.sol";
 import "./Optn.sol";
 
-contract OrderBookFactory is Initializable{
-
+contract OrderBookFactory is Initializable {
     address private _sellOptionFactory;
-    address[] private orderbooks;
 
-    function __orderBookFactory_init(address sellOptionFactory) external initializer {
+    function __orderBookFactory_init(address sellOptionFactory)
+        external
+        initializer
+    {
         _sellOptionFactory = sellOptionFactory;
     }
 
-    event OrderBookCreated(address orderBookAddress, address token, address oracle, address baseCurrency);
-
-    function getOrderBooks() public view returns(address[] memory) {
-        return orderbooks;
-    }
+    event OrderBookCreated(
+        address orderBookAddress,
+        address indexed token,
+        address indexed oracle,
+        address indexed baseCurrency
+    );
 
     function createMarket(OrderBookStandard memory orderBookStandard) external {
         address orderBookAddress = ClonesUpgradeable.clone(_sellOptionFactory);
-        ISellOptionFactory sellOptionFactory = ISellOptionFactory(orderBookAddress);
+        ISellOptionFactory sellOptionFactory = ISellOptionFactory(
+            orderBookAddress
+        );
         sellOptionFactory.__sellOptionFactory_init(orderBookStandard);
-        orderbooks.push(orderBookAddress);
-        emit OrderBookCreated(orderBookAddress, orderBookStandard.token, orderBookStandard.oracle, orderBookStandard.baseCurrency);
+        emit OrderBookCreated(
+            orderBookAddress,
+            orderBookStandard.token,
+            orderBookStandard.oracle,
+            orderBookStandard.baseCurrency
+        );
     }
 }

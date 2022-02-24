@@ -5,10 +5,8 @@ import "./IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 struct Optn {
-    uint256 durationInBlock;
     uint256 premium;
-    int strikePrice;
-    uint256 amount;
+    int256 strikePrice;
 }
 
 struct Order {
@@ -24,4 +22,6 @@ struct OrderBookStandard {
     address baseCurrency;
     address oracle;
     address token;
+    uint256 amount;
+    uint256 durationInBlock;
 }

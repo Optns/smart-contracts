@@ -10,56 +10,71 @@ import "./SellCallOptionOrder.sol";
 import "./interface/ISellOptionFactory.sol";
 
 contract SellOptionFactory is ISellOptionFactory, Initializable {
-
-    address private _sellPutImp;
-    address private _sellCallImp;
-    address private _baseCurrency;
-    address private _token;
+    OrderBookStandard private _orderBookStandard;
     AggregatorV3Interface private _priceFeed;
 
-    // list of contracts
-    address[] private putOrders;
-    address[] private callOrders;
+    event SellPutOption(address sellPutOptionAddress, address selller);
 
-    function __sellOptionFactory_init(OrderBookStandard memory orderBookStandard) override external initializer {
-        _priceFeed = AggregatorV3Interface(orderBookStandard.oracle);
-        _sellPutImp = orderBookStandard.sellPutImp;
-        _sellCallImp = orderBookStandard.sellCallImp;
-        _baseCurrency = orderBookStandard.baseCurrency;
-        _token = orderBookStandard.token;
+    event SellCallOption(
+        address sellCallOptionAddress,
+        address indexed selller
+    );
+
+    function __sellOptionFactory_init(
+        OrderBookStandard memory orderBookStandard
+    ) external override initializer {
+        _orderBookStandard = orderBookStandard;
+        _priceFeed = AggregatorV3Interface(_orderBookStandard.oracle);
     }
 
-    function getToken() external override view returns(IERC20){
-        return IERC20(_token);
+    function getToken() external view override returns (IERC20) {
+        return IERC20(_orderBookStandard.token);
     }
 
-    function getBaseCurrency() external override view returns(IERC20){ 
-        return IERC20(_baseCurrency);
+    function getBaseCurrency() external view override returns (IERC20) {
+        return IERC20(_orderBookStandard.baseCurrency);
     }
 
-    function latestPrice() override external view returns (int) {
-        (
-            , 
-            int price,
-            ,
-            ,
-        ) = _priceFeed.latestRoundData();
+    function getAmount() external view override returns (uint256) {
+        return _orderBookStandard.amount;
+    }
+
+    function getDurationInBlock() external view override returns (uint256) {
+        return _orderBookStandard.durationInBlock;
+    }
+
+    function latestPrice() external view override returns (int256) {
+        (, int256 price, , , ) = _priceFeed.latestRoundData();
         return price;
     }
 
-    function cloneSellPutContract(Optn memory optn, address seller) external override returns(bool){
-        address sellPutOptionAddress = ClonesUpgradeable.clone(_sellPutImp);
+    function cloneSellPutContract(Optn memory optn, address seller)
+        external
+        override
+        returns (bool)
+    {
+        address sellPutOptionAddress = ClonesUpgradeable.clone(
+            _orderBookStandard.sellPutImp
+        );
         ISellOptionOrder sellPutOption = ISellOptionOrder(sellPutOptionAddress);
         sellPutOption.__sellOption_init(optn, seller, address(this));
-        putOrders.push(sellPutOptionAddress);
+        emit SellPutOption(address(this), seller);
         return true;
     }
 
-    function cloneCallPutContract(Optn memory optn, address seller) external override returns(bool){
-        address sellCallOptionAddress = ClonesUpgradeable.clone(_sellCallImp);
-        ISellOptionOrder sellCallOption = ISellOptionOrder(sellCallOptionAddress);
+    function cloneCallPutContract(Optn memory optn, address seller)
+        external
+        override
+        returns (bool)
+    {
+        address sellCallOptionAddress = ClonesUpgradeable.clone(
+            _orderBookStandard.sellCallImp
+        );
+        ISellOptionOrder sellCallOption = ISellOptionOrder(
+            sellCallOptionAddress
+        );
         sellCallOption.__sellOption_init(optn, seller, address(this));
-        callOrders.push(sellCallOptionAddress);
+        emit SellCallOption(address(this), seller);
         return true;
     }
 }
