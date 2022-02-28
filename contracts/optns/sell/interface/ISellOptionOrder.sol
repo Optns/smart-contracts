@@ -3,8 +3,11 @@ pragma solidity ^0.8.0;
 import "./../../Optn.sol";
 
 interface ISellOptionOrder {
-
-    function __sellOption_init(Optn memory optn, address seller, address orderbook) external;
+    function __sellOption_init(
+        Optn memory optn,
+        address seller,
+        address orderbook
+    ) external;
 
     function escrow(uint256) external;
 
@@ -13,6 +16,6 @@ interface ISellOptionOrder {
     function payPremium() external;
 
     function expire() external;
-    
+
     function execute() external;
 }

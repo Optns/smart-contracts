@@ -7,7 +7,6 @@ import "./../Optn.sol";
  * @dev Implementation of the { IOptn } interface.
  */
 abstract contract OptionOrder is IOptionOrder {
-    
     Optn internal optn;
     uint256 internal initializationBlock;
     address internal seller;
@@ -40,11 +39,11 @@ abstract contract OptionOrder is IOptionOrder {
         _;
     }
 
-    function getSeller() internal view returns(address) {
+    function getSeller() internal view returns (address) {
         return seller;
     }
 
-    function getBuyer() internal view returns(address) {
+    function getBuyer() internal view returns (address) {
         return buyer;
     }
 
@@ -52,15 +51,20 @@ abstract contract OptionOrder is IOptionOrder {
         buyer = msg.sender;
     }
 
-    function order() external override view returns(Order memory) {
+    function order() external view override returns (Order memory) {
         return Order(optn, seller, buyer, initializationBlock);
     }
 
-    function viewInitializationBlock() external override view returns(uint256){
+    function viewInitializationBlock()
+        external
+        view
+        override
+        returns (uint256)
+    {
         return initializationBlock;
     }
 
-    function getOptn() internal view returns(Optn memory) {
+    function getOptn() internal view returns (Optn memory) {
         return optn;
     }
 
@@ -68,17 +72,30 @@ abstract contract OptionOrder is IOptionOrder {
         require(initializationBlock == 0);
         initializationBlock = block.number;
     }
-    
-    function withdraw(address to, uint256 amount, IERC20 token) internal {
+
+    function withdraw(
+        address to,
+        uint256 amount,
+        IERC20 token
+    ) internal {
         token.transfer(to, amount);
     }
 
-    function deposit(address from, address to, uint256 amount, IERC20 token) internal {
+    function deposit(
+        address from,
+        address to,
+        uint256 amount,
+        IERC20 token
+    ) internal {
         _allownace(from, amount, token);
         token.transferFrom(from, to, amount);
     }
 
-    function _allownace(address from, uint256 amount, IERC20 token) private view {
+    function _allownace(
+        address from,
+        uint256 amount,
+        IERC20 token
+    ) private view {
         uint256 allowance = token.allowance(from, address(this));
         require(allowance >= amount, "Permission: Allowance != amount");
     }
