@@ -4,7 +4,15 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "ganache": "ganache-cli --networkId $npm_package_config_ganache_networkId --gasLimit $npm_package_config_ganache_gasLimit --gasPrice $npm_package_config_ganache_gasPrice --mnemonic \"$MNEMONIC\""
+  },
+  "config": {
+    "ganache": {
+      "networkId": 3777,
+      "gasLimit": 9000000,
+      "gasPrice": 9999292929
+    }
   },
   "devDependencies": {
     "@chainlink/contracts": "^0.3.1",
@@ -12,9 +20,11 @@
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.13.0",
+    "@uniswap/v3-periphery": "^1.4.0",
     "chai": "^4.2.0",
     "ethereum-waffle": "^3.0.0",
     "ethers": "^5.0.0",
+    "ganache": "^7.0.2",
     "hardhat": "^2.8.2",
     "hardhat-gas-reporter": "^1.0.7",
     "mocha": "^9.1.4",
