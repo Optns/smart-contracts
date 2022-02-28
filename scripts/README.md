@@ -1,4 +1,4 @@
-# test token address at localhost 
+# test token address at localhost ganache
 
 testUSD deployed to: 0xba69BE40D4A4B09E3A5eB50990cc0aBE92Cd4E1F
 
