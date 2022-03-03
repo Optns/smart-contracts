@@ -17,10 +17,11 @@ struct Order {
 }
 
 struct OrderBookStandard {
-    address sellPutImp;
-    address sellCallImp;
+    address implementation;
     address baseCurrency;
     address token;
     uint256 amount;
     uint256 durationInBlock;
 }
+
+enum OptionType {PUT, CALL}

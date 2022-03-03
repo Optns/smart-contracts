@@ -1,33 +1,27 @@
 const { ethers, upgrades } = require('hardhat')
 const { expect } = require('chai')
-const sellOptionFactoryTest = require('./sell-option-factory-test')
+const optionFactoryTest = require('./option-factory-test')
 
 let owner, holder1, holder2, holders
-let sellPutOptionOrder, sellCallOptionOrder, sellOptionFactory, orderBookFactory
+let OrderBookFactory, OptionFactory, Option
+let orderBookFactory, optionFactory, option
 let orderBookStandard
-let SellOptionFactory
 
 before('contract factory', async () => {
   ;[owner, holder1, holder2, ...holders] = await ethers.getSigners()
-  const SellPutOptionOrder = await ethers.getContractFactory(
-    'SellPutOptionOrder',
-  )
-  const SellCallOptionOrder = await ethers.getContractFactory(
-    'SellCallOptionOrder',
-  )
-  SellOptionFactory = await ethers.getContractFactory('SellOptionFactory')
-  const OrderBookFactory = await ethers.getContractFactory('OrderBookFactory')
 
-  sellPutOptionOrder = await SellPutOptionOrder.deploy()
-  sellCallOptionOrder = await SellCallOptionOrder.deploy()
-  sellOptionFactory = await SellOptionFactory.deploy()
+  OrderBookFactory = await ethers.getContractFactory('OrderBookFactory')
+  OptionFactory = await ethers.getContractFactory('OptionFactory')
+  Option = await ethers.getContractFactory('Option')
+
   orderBookFactory = await OrderBookFactory.deploy()
+  optionFactory = await OptionFactory.deploy()
+  option = await Option.deploy()
 
-  orderBookFactory.__orderBookFactory_init(sellOptionFactory.address)
+  orderBookFactory.__orderBookFactory_init(optionFactory.address)
 
   orderBookStandard = {
-    sellPutImp: sellPutOptionOrder.address,
-    sellCallImp: sellCallOptionOrder.address,
+    implementation: option.address,
     baseCurrency: '0x5f4ec3df9cbd43714fe2740f5e3616155c5b8410',
     token: '0x5f4ec3df9cbd43714fe2740f5e3616155c5b8412',
     amount: 2121212,
@@ -48,11 +42,12 @@ describe('orderbook factory', () => {
     })[0]
 
     args = event.args
-    contract = await SellOptionFactory.attach(args[0])
+    contract = await OptionFactory.attach(args[0])
   })
 
   it('market address is valid', () => {
-    ethers.utils.isAddress(args[0])
+    expect(ethers.utils.isAddress(args[0])).equal(true)
+    expect(args[0]).to.not.equal('0x0')
   })
 
   it('market clone event token', () => {
@@ -69,8 +64,13 @@ describe('orderbook factory', () => {
 
   it('attach sell option factory to market clone address', async () => {
     describe(
-      'sell option factory',
-      sellOptionFactoryTest(contract, orderBookStandard, owner),
+      'put option factory',
+      optionFactoryTest(contract, orderBookStandard, owner, 0),
+    )
+
+    describe(
+      'call option factory',
+      optionFactoryTest(contract, orderBookStandard, owner, 1),
     )
   })
 })

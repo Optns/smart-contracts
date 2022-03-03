@@ -1,21 +1,26 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import './interface/IOptionOrder.sol';
+import './interface/IOption.sol';
 import './struct/Optn.sol';
+import './interface/IOptionFactory.sol';
 
 /**
  * @dev Implementation of the { IOptn } interface.
  */
-abstract contract OptionOrder is IOptionOrder {
+contract Option is IOption {
     Optn internal optn;
     uint256 internal initializationBlock;
     address internal seller;
     address internal buyer;
+    IOptionFactory private _orderbook;
+    OptionType _optionType;
 
-    function __option_init(Optn memory _optn, address _seller) internal {
+    function __option_init(Optn memory _optn, address _seller, address orderbook, OptionType optionType) external override {
         seller = _seller;
         optn = _optn;
         initializationBlock = 0;
+        _orderbook = IOptionFactory(orderbook);
+        _optionType = optionType;
     }
 
     event Escrow(address order, uint256 amount);
@@ -93,5 +98,46 @@ abstract contract OptionOrder is IOptionOrder {
     ) private view {
         uint256 allowance = token.allowance(from, address(this));
         require(allowance >= amount, 'Permission: Allowance != amount');
+    }
+
+    function escrow(uint256 funds) external override onlySeller {
+        require(funds > 0, 'Amount: amount should be > 0');
+
+        IERC20 token = _orderbook.getToken();
+
+        deposit(msg.sender, address(this), funds, token);
+        emit Escrow(address(this), funds);
+    }
+
+    function terminate() external override onlySeller onlyNullBuyer {
+        IERC20 token = _orderbook.getToken();
+
+        uint256 contractBalance = token.balanceOf(address(this));
+        require(contractBalance > 0, 'Balance: zero balance in contract');
+
+        withdraw(seller, contractBalance, token);
+        emit Terminate(address(this));
+    }
+
+    function payPremium() external override onlyNullBuyer {
+        // check if contract have escrow
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+        deposit(msg.sender, seller, optn.premium, baseCurrency);
+        setBuyer();
+        initializeBlock();
+        emit Premium(address(this));
+    }
+
+    function expire() external override onlySeller {
+        uint256 durationInBlock = _orderbook.getDurationInBlock();
+        require(durationInBlock < block.number - initializationBlock);
+
+        IERC20 token = _orderbook.getToken();
+
+        uint256 contractBalance = token.balanceOf(address(this));
+        require(contractBalance > 0, 'Balance: zero balance in contract');
+
+        withdraw(seller, contractBalance, token);
+        emit Expire(address(this));
     }
 }

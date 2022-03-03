@@ -1,12 +1,12 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 
-const sellOptionFactoryTest = (contract, orderBookStandard, owner) => {
+const optionFactoryTest = (contract, orderBookStandard, owner, optionType) => {
   return () => {
     it('initialize sell option factory again failed', async () => {
       const invalidOrderBookStandard = { ...orderBookStandard, amount: 0 }
       contract
-        .__sellOptionFactory_init(invalidOrderBookStandard)
+        .__optionFactory_init(invalidOrderBookStandard)
         .then(() => {
           expect(true).equal(false)
         })
@@ -51,7 +51,7 @@ const sellOptionFactoryTest = (contract, orderBookStandard, owner) => {
       expect(obs.durationInBlock).equal(orderBookStandard.durationInBlock)
     })
 
-    describe('clone sell put contract', () => {
+    describe('clone contract', () => {
       const optn = {
         premium: 400,
         strikePrice: 4000,
@@ -59,14 +59,15 @@ const sellOptionFactoryTest = (contract, orderBookStandard, owner) => {
       let args
 
       before(async () => {
-        const transaction = await contract.cloneSellPutContract(
+        const transaction = await contract.cloneOptionContract(
           optn,
           owner.address,
+          optionType
         )
         const receipt = await transaction.wait()
 
         const event = receipt.events.filter((event) => {
-          return event.event === 'SellPutOption'
+          return event.event === 'Option'
         })[0]
 
         args = event.args
@@ -77,40 +78,15 @@ const sellOptionFactoryTest = (contract, orderBookStandard, owner) => {
       })
 
       it('put option address is valid', () => {
-        ethers.utils.isAddress(args[0])
-      })
-    })
-
-    describe('clone call put contract', () => {
-      const optn = {
-        premium: 300,
-        strikePrice: 3000,
-      }
-      let args
-
-      before(async () => {
-        const transaction = await contract.cloneSellCallContract(
-          optn,
-          owner.address,
-        )
-        const receipt = await transaction.wait()
-
-        const event = receipt.events.filter((event) => {
-          return event.event === 'SellCallOption'
-        })[0]
-
-        args = event.args
+        expect(ethers.utils.isAddress(args[0])).equal(true)
+        expect(args[0]).to.not.equal('0x0')
       })
 
-      it('owner is seller', () => {
-        expect(args[1].toLowerCase()).to.equal(owner.address.toLowerCase())
-      })
-
-      it('call option address is valid', () => {
-        ethers.utils.isAddress(args[0])
+      it(`option type is ${optionType}`, () => {
+        expect(args[2]).equal(optionType)
       })
     })
   }
 }
 
-module.exports = sellOptionFactoryTest
+module.exports = optionFactoryTest
