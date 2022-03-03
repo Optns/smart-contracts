@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "./interface/IOptionOrder.sol";
-import "./../Optn.sol";
+import "./struct/Optn.sol";
 
 /**
  * @dev Implementation of the { IOptn } interface.

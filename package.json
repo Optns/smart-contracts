@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha",
+    "test": "hardhat test",
+    "compile": "hardhat compile",
     "ganache": "ganache-cli --networkId $npm_package_config_ganache_networkId --gasLimit $npm_package_config_ganache_gasLimit --gasPrice $npm_package_config_ganache_gasPrice --mnemonic \"$MNEMONIC\""
   },
   "config": {
@@ -29,5 +30,8 @@
     "hardhat-gas-reporter": "^1.0.7",
     "mocha": "^9.1.4",
     "web3": "^1.7.0"
+  },
+  "dependencies": {
+    "web3-eth-contract": "^1.7.0"
   }
 }

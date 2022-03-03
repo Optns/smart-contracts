@@ -4,14 +4,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "./../Optn.sol";
+import "./struct/Optn.sol";
 import "./SellPutOptionOrder.sol";
 import "./SellCallOptionOrder.sol";
 import "./interface/ISellOptionFactory.sol";
 
 contract SellOptionFactory is ISellOptionFactory, Initializable {
     OrderBookStandard private _orderBookStandard;
-    AggregatorV3Interface private _priceFeed;
 
     event SellPutOption(address sellPutOptionAddress, address selller);
 
@@ -24,7 +23,6 @@ contract SellOptionFactory is ISellOptionFactory, Initializable {
         OrderBookStandard memory orderBookStandard
     ) external override initializer {
         _orderBookStandard = orderBookStandard;
-        _priceFeed = AggregatorV3Interface(_orderBookStandard.oracle);
     }
 
     function getToken() external view override returns (IERC20) {
@@ -43,15 +41,13 @@ contract SellOptionFactory is ISellOptionFactory, Initializable {
         return _orderBookStandard.durationInBlock;
     }
 
-    function latestPrice() external view override returns (int256) {
-        (, int256 price, , , ) = _priceFeed.latestRoundData();
-        return price;
+    function getOrderBookStandard() external view override returns (OrderBookStandard memory) {
+        return _orderBookStandard;
     }
 
     function cloneSellPutContract(Optn memory optn, address seller)
         external
         override
-        returns (bool)
     {
         address sellPutOptionAddress = ClonesUpgradeable.clone(
             _orderBookStandard.sellPutImp
@@ -59,13 +55,11 @@ contract SellOptionFactory is ISellOptionFactory, Initializable {
         ISellOptionOrder sellPutOption = ISellOptionOrder(sellPutOptionAddress);
         sellPutOption.__sellOption_init(optn, seller, address(this));
         emit SellPutOption(address(this), seller);
-        return true;
     }
 
-    function cloneCallPutContract(Optn memory optn, address seller)
+    function cloneSellCallContract(Optn memory optn, address seller)
         external
         override
-        returns (bool)
     {
         address sellCallOptionAddress = ClonesUpgradeable.clone(
             _orderBookStandard.sellCallImp
@@ -75,6 +69,5 @@ contract SellOptionFactory is ISellOptionFactory, Initializable {
         );
         sellCallOption.__sellOption_init(optn, seller, address(this));
         emit SellCallOption(address(this), seller);
-        return true;
     }
 }

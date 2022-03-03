@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./sell/interface/ISellOptionFactory.sol";
-import "./Optn.sol";
+import "./interface/ISellOptionFactory.sol";
+import "./struct/Optn.sol";
 
 contract OrderBookFactory is Initializable {
     address private _sellOptionFactory;
@@ -20,7 +20,6 @@ contract OrderBookFactory is Initializable {
     event OrderBookCreated(
         address orderBookAddress,
         address indexed token,
-        address indexed oracle,
         address indexed baseCurrency
     );
 
@@ -33,7 +32,6 @@ contract OrderBookFactory is Initializable {
         emit OrderBookCreated(
             orderBookAddress,
             orderBookStandard.token,
-            orderBookStandard.oracle,
             orderBookStandard.baseCurrency
         );
     }

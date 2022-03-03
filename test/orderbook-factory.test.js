@@ -1,49 +1,65 @@
-// const { ethers, upgrades } = require("hardhat")
-// const { assert, expect } = require("chai")
+const { ethers, upgrades } = require("hardhat")
+const { expect } = require("chai");
+const sellOptionFactoryTest = require("./sell-option-factory-test")
 
-// beforeEach('contract factory', async () => {
-//     [this.owner, this.holder1, this.holder2, ...this.holders] = await ethers.getSigners();
-//     this.SellPutOptionOrder = await ethers.getContractFactory("SellPutOptionOrder")
-//     this.SellCallOptionOrder = await ethers.getContractFactory("SellCallOptionOrder")
-//     this.SellOptionFactory = await ethers.getContractFactory("SellOptionFactory")
-//     this.OrderBookFactory = await ethers.getContractFactory("OrderBookFactory")
-// })
+let owner, holder1, holder2, holders;
+let sellPutOptionOrder, sellCallOptionOrder, sellOptionFactory, orderBookFactory
+let orderBookStandard
+let SellOptionFactory
 
-// beforeEach(async () => {
-//     this.sellPutOptionOrder = await this.SellPutOptionOrder.deploy()
-//     this.sellCallOptionOrder = await this.SellCallOptionOrder.deploy()
-//     this.sellOptionFactory = await this.SellOptionFactory.deploy()
-//     this.orderBookFactory = await this.OrderBookFactory.deploy()
+before('contract factory', async () => {
+    [owner, holder1, holder2, ...holders] = await ethers.getSigners();
+    const SellPutOptionOrder = await ethers.getContractFactory("SellPutOptionOrder")
+    const SellCallOptionOrder = await ethers.getContractFactory("SellCallOptionOrder")
+    SellOptionFactory = await ethers.getContractFactory("SellOptionFactory")
+    const OrderBookFactory = await ethers.getContractFactory("OrderBookFactory")
 
-//     this.orderBookFactory.__orderBookFactory_init(this.sellOptionFactory.address)
-// })
+    sellPutOptionOrder = await SellPutOptionOrder.deploy()
+    sellCallOptionOrder = await SellCallOptionOrder.deploy()
+    sellOptionFactory = await SellOptionFactory.deploy()
+    orderBookFactory = await OrderBookFactory.deploy()
 
-// beforeEach(async () => {
-//     this.orderBookStandard = {
-//         sellPutImp: this.sellPutOptionOrder.address,
-//         sellCallImp: this.sellCallOptionOrder.address,
-//         baseCurrency: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8410",
-//         oracle: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8411",
-//         token: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8412"
-//     }
-//     await this.orderBookFactory.createMarket(this.orderBookStandard)
-// })
+    orderBookFactory.__orderBookFactory_init(sellOptionFactory.address)
 
-// it("order book", async () => {
-//     this.orderbooks = await this.orderBookFactory.getOrderBooks()
-//     expect(this.orderbooks).to.be.an('array')
-// })
+    orderBookStandard = {
+        sellPutImp: sellPutOptionOrder.address,
+        sellCallImp: sellCallOptionOrder.address,
+        baseCurrency: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8410",
+        token: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8412",
+        amount: 2121212,
+        durationInBlock: 312321313
+    }
+})
 
-// it("create option order", async () => {
-//     const orderAddress = this.orderbooks[0]
-//     const optn = {
-//         durationInBlock: 10000,
-//         premium: 103032,
-//         strikePrice: 3231313,
-//         amount: 323232
-//     }
+describe("orderbook factory", () => {
+    let contract
+    let args
 
-//     const contract = await ethers.getContractAt("SellOptionFactory", orderAddress);
+    before(async () => {
+        const transaction = await orderBookFactory.createMarket(orderBookStandard)
+        const receipt = await transaction.wait();
 
-//     await contract.cloneSellPutContract(optn, this.owner.address)
-// })
+        const event = receipt.events.filter(event => {
+            return event.event === 'OrderBookCreated'
+        })[0]
+
+        args = event.args
+        contract = await SellOptionFactory.attach(args[0])
+    })
+
+    it("market address is valid", () => {
+        ethers.utils.isAddress(args[0])
+    })
+
+    it("market clone event token", () => {
+        expect(args[1].toLowerCase()).to.equal(orderBookStandard.token.toLowerCase())
+    })
+
+    it("market clone event base currency", () => {
+        expect(args[2].toLowerCase()).to.equal(orderBookStandard.baseCurrency.toLowerCase())
+    })
+
+    it("attach sell option factory to market clone address", async () => {  
+        describe("sell option factory", sellOptionFactoryTest(contract, orderBookStandard, owner))
+    })
+})

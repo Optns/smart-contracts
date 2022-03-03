@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "./../../Optn.sol";
+import "./../struct/Optn.sol";
 
 interface ISellOptionFactory {
     function __sellOptionFactory_init(
@@ -15,13 +15,11 @@ interface ISellOptionFactory {
 
     function getDurationInBlock() external view returns (uint256);
 
-    function latestPrice() external view returns (int256);
+    function getOrderBookStandard() external view returns (OrderBookStandard memory);
 
     function cloneSellPutContract(Optn memory optn, address seller)
-        external
-        returns (bool);
+        external;
 
-    function cloneCallPutContract(Optn memory optn, address seller)
-        external
-        returns (bool);
+    function cloneSellCallContract(Optn memory optn, address seller)
+        external;
 }
