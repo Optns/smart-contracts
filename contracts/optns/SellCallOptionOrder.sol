@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./OptionOrder.sol";
-import "./interface/ISellOptionOrder.sol";
-import "./interface/ISellOptionFactory.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import './OptionOrder.sol';
+import './interface/ISellOptionOrder.sol';
+import './interface/ISellOptionFactory.sol';
+import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 contract SellCallOptionOrder is ISellOptionOrder, OptionOrder, Initializable {
     ISellOptionFactory private _orderbook;
@@ -20,7 +20,7 @@ contract SellCallOptionOrder is ISellOptionOrder, OptionOrder, Initializable {
     }
 
     function escrow(uint256 funds) external override onlySeller {
-        require(funds > 0, "Amount: amount should be > 0");
+        require(funds > 0, 'Amount: amount should be > 0');
 
         IERC20 baseCurrency = _orderbook.getBaseCurrency();
 
@@ -32,7 +32,7 @@ contract SellCallOptionOrder is ISellOptionOrder, OptionOrder, Initializable {
         IERC20 baseCurrency = _orderbook.getBaseCurrency();
         uint256 contractBalance = baseCurrency.balanceOf(address(this));
 
-        require(contractBalance > 0, "Balance: zero balance in contract");
+        require(contractBalance > 0, 'Balance: zero balance in contract');
         withdraw(seller, contractBalance, baseCurrency);
         emit Terminate(address(this));
     }
@@ -53,12 +53,10 @@ contract SellCallOptionOrder is ISellOptionOrder, OptionOrder, Initializable {
         IERC20 baseCurrency = _orderbook.getBaseCurrency();
 
         uint256 contractBalance = baseCurrency.balanceOf(address(this));
-        require(contractBalance > 0, "Balance: zero balance in contract");
+        require(contractBalance > 0, 'Balance: zero balance in contract');
         withdraw(seller, contractBalance, baseCurrency);
         emit Expire(address(this));
     }
 
-    function execute() external override onlyBuyer {
-        
-    }
+    function execute() external override onlyBuyer {}
 }

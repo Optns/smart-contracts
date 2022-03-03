@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "./interface/IOptionOrder.sol";
-import "./struct/Optn.sol";
+import './interface/IOptionOrder.sol';
+import './struct/Optn.sol';
 
 /**
  * @dev Implementation of the { IOptn } interface.
@@ -25,17 +25,17 @@ abstract contract OptionOrder is IOptionOrder {
     event Execute(address order);
 
     modifier onlySeller() {
-        require(seller == msg.sender, "Access: caller is not seller");
+        require(seller == msg.sender, 'Access: caller is not seller');
         _;
     }
 
     modifier onlyBuyer() {
-        require(buyer == msg.sender, "Access: caller is not buyer");
+        require(buyer == msg.sender, 'Access: caller is not buyer');
         _;
     }
 
     modifier onlyNullBuyer() {
-        require(buyer == address(0), "Access: buyer found");
+        require(buyer == address(0), 'Access: buyer found');
         _;
     }
 
@@ -55,12 +55,7 @@ abstract contract OptionOrder is IOptionOrder {
         return Order(optn, seller, buyer, initializationBlock);
     }
 
-    function viewInitializationBlock()
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function viewInitializationBlock() external view override returns (uint256) {
         return initializationBlock;
     }
 
@@ -97,6 +92,6 @@ abstract contract OptionOrder is IOptionOrder {
         IERC20 token
     ) private view {
         uint256 allowance = token.allowance(from, address(this));
-        require(allowance >= amount, "Permission: Allowance != amount");
+        require(allowance >= amount, 'Permission: Allowance != amount');
     }
 }

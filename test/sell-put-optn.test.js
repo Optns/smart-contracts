@@ -17,7 +17,7 @@
 //         durationInBlock: 1,
 //         premium: 15,
 //         strikePrice: 20,
-//         token: this.token.address 
+//         token: this.token.address
 //     }
 //     this.sellPutOption = await this.SellPutOption.deploy(this.contractParams)
 // })
@@ -76,15 +76,15 @@
 //     describe("pay premium", () => {
 //         beforeEach("paying premium", async () => {
 //             this.ownerInitialUsdBalance = await this.tusd.balanceOf(this.owner.address)
-    
+
 //             await this.tusd.connect(this.holder1)
 //             .approve(this.sellPutOption.address, this.contractParams.premium)
-        
+
 //             await this.sellPutOption.connect(this.holder1).payPremium()
-        
+
 //             this.ownerFinalUsdBalance = await this.tusd.balanceOf(this.owner.address)
 //         })
-    
+
 //         it("check if seller is credited", () => {
 //             assert.equal(
 //                 this.ownerFinalUsdBalance.toString(),
@@ -96,10 +96,10 @@
 //             const buyer = await this.sellPutOption.getBuyer()
 //             assert.equal(buyer, this.holder1.address)
 //         })
-    
+
 //         it("terminating sold contract", async () => {
 //             //expect(await this.sellPutOption.terminateContract()).to.be.an('Error')
-//         })  
+//         })
 
 //         it("expire contract", () => {
 //             describe("expire contract", () => {
@@ -117,4 +117,3 @@
 //         })
 //     })
 // })
-
