@@ -41,6 +41,6 @@ contract OptionFactory is IOptionFactory, Initializable {
         address optionAddress = ClonesUpgradeable.clone(_orderBookStandard.implementation);
         IOption option = IOption(optionAddress);
         option.__option_init(optn, seller, address(this), optionType);
-        emit Option(address(this), seller, optionType);
+        emit Option(optionAddress, seller, optionType);
     }
 }

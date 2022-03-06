@@ -10,15 +10,19 @@ import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
 interface IOption {
     function __option_init(Optn memory _optn, address _seller, address orderbook, OptionType optionType) external; 
 
-    function order() external view returns (Order memory);
+    function getSeller() external view returns (address);
+    
+    function getBuyer() external view returns (address);
 
-    function viewInitializationBlock() external view returns (uint256);
+    function getOrder() external view returns (Order memory);
 
-    function escrow(uint256) external;
+    function getStatus() external view returns(Status);
 
-    function terminate() external;
+    function escrow() external;
 
-    function payPremium() external;
+    function cancel() external;
+
+    function buy() external;
 
     function expire() external;
 }

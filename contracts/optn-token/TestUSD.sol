@@ -18,10 +18,10 @@ contract TestUSD is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpg
     }
 
     function mint() public {
-        _mint(msg.sender, 10000);
+        _mint(msg.sender, 100000000000);
     }
 
     function mintForExchange() public {
-        _mint(msg.sender, 1000000000);
+        _mint(msg.sender, 100000000000);
     }
 }

@@ -2,13 +2,25 @@ const { ethers, upgrades } = require('hardhat')
 const { expect } = require('chai')
 const optionFactoryTest = require('./option-factory-test')
 
-let owner, holder1, holder2, holders
+let owner
 let OrderBookFactory, OptionFactory, Option
 let orderBookFactory, optionFactory, option
 let orderBookStandard
 
+let TestUSD, TestOptn
+let testUSD, testOptn
+
+const OptionType = {
+  PUT: 0,
+  CALL: 1
+}
+
+const proxyArgs = {
+  kind: 'uups',
+}
+
 before('contract factory', async () => {
-  ;[owner, holder1, holder2, ...holders] = await ethers.getSigners()
+  ;[owner] = await ethers.getSigners()
 
   OrderBookFactory = await ethers.getContractFactory('OrderBookFactory')
   OptionFactory = await ethers.getContractFactory('OptionFactory')
@@ -18,18 +30,26 @@ before('contract factory', async () => {
   optionFactory = await OptionFactory.deploy()
   option = await Option.deploy()
 
+  // get contract factory
+  TestUSD = await ethers.getContractFactory('TestUSD')
+  TestOptn = await ethers.getContractFactory('TestOptn')
+
+  // deploy contracts
+  testUSD = await upgrades.deployProxy(TestUSD, proxyArgs)
+  testOptn = await upgrades.deployProxy(TestOptn, proxyArgs)
+
   orderBookFactory.__orderBookFactory_init(optionFactory.address)
 
   orderBookStandard = {
     implementation: option.address,
-    baseCurrency: '0x5f4ec3df9cbd43714fe2740f5e3616155c5b8410',
-    token: '0x5f4ec3df9cbd43714fe2740f5e3616155c5b8412',
+    baseCurrency: testUSD.address,
+    token: testOptn.address,
     amount: 2121212,
     durationInBlock: 312321313,
   }
 })
 
-describe('orderbook factory', () => {
+describe('Orderbook factory', () => {
   let contract
   let args
 
@@ -46,8 +66,8 @@ describe('orderbook factory', () => {
   })
 
   it('market address is valid', () => {
-    expect(ethers.utils.isAddress(args[0])).equal(true)
-    expect(args[0]).to.not.equal('0x0')
+    expect(ethers.utils.isAddress(args[0])).to.equal(true)
+    expect(args[0]).to.not.equal('0x0000000000000000000000000000000000000000')
   })
 
   it('market clone event token', () => {
@@ -64,13 +84,13 @@ describe('orderbook factory', () => {
 
   it('attach sell option factory to market clone address', async () => {
     describe(
-      'put option factory',
-      optionFactoryTest(contract, orderBookStandard, owner, 0),
+      'Put market factory',
+      optionFactoryTest(contract, orderBookStandard, owner, OptionType.PUT),
     )
 
     describe(
-      'call option factory',
-      optionFactoryTest(contract, orderBookStandard, owner, 1),
+      'Call market factory',
+      optionFactoryTest(contract, orderBookStandard, owner, OptionType.CALL),
     )
   })
-})
+});

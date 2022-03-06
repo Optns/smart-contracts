@@ -18,10 +18,10 @@ contract TestOptn is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUp
     }
 
     function mint() public {
-        _mint(msg.sender, 1000);
+        _mint(msg.sender, 100000000000);
     }
 
     function mintForExchange() public {
-        _mint(msg.sender, 10000000);
+        _mint(msg.sender, 100000000000);
     }
 }

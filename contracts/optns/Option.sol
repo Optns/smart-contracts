@@ -3,92 +3,157 @@ pragma solidity ^0.8.0;
 import './interface/IOption.sol';
 import './struct/Optn.sol';
 import './interface/IOptionFactory.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 /**
  * @dev Implementation of the { IOptn } interface.
  */
-contract Option is IOption {
-    Optn internal optn;
-    uint256 internal initializationBlock;
-    address internal seller;
-    address internal buyer;
+ 
+contract Option is IOption, Initializable {
+    Optn private _optn;
+    uint256 private _initializationBlock;
+    address private _seller;
+    address private _buyer;
     IOptionFactory private _orderbook;
     OptionType _optionType;
+    Status _status;
 
-    function __option_init(Optn memory _optn, address _seller, address orderbook, OptionType optionType) external override {
-        seller = _seller;
-        optn = _optn;
-        initializationBlock = 0;
+    function __option_init(Optn memory optn, address seller, address orderbook, OptionType optionType) external override initializer {
+        _seller = seller;
+        _optn = optn;
+        _initializationBlock = 0;
         _orderbook = IOptionFactory(orderbook);
         _optionType = optionType;
+        _status = Status.INIT;
     }
 
-    event Escrow(address order, uint256 amount);
-    event Terminate(address order);
-    event Premium(address order);
-    event Expire(address order);
-    event Execute(address order);
-
     modifier onlySeller() {
-        require(seller == msg.sender, 'Access: caller is not seller');
+        require(_seller == msg.sender, 'Access: caller is not seller');
         _;
     }
 
     modifier onlyBuyer() {
-        require(buyer == msg.sender, 'Access: caller is not buyer');
+        require(_buyer == msg.sender, 'Access: caller is not buyer');
         _;
     }
 
     modifier onlyNullBuyer() {
-        require(buyer == address(0), 'Access: buyer found');
+        require(_buyer == address(0), 'Access: buyer found');
         _;
     }
 
-    function getSeller() internal view returns (address) {
-        return seller;
+    modifier onlyInit() {
+        require(_status == Status.INIT, "Status not INIT");
+        _;
     }
 
-    function getBuyer() internal view returns (address) {
-        return buyer;
+    modifier onlyEscrowed() {
+        require(_status == Status.ESCROWED, "Status not ESCROWED");
+        _;
     }
 
-    function setBuyer() internal {
-        buyer = msg.sender;
+    modifier onlyBought() {
+        require(_status == Status.BOUGHT, "Status not BOUGHT");
+        _;
     }
 
-    function order() external view override returns (Order memory) {
-        return Order(optn, seller, buyer, initializationBlock);
+    modifier onlyExpired() {
+        uint256 durationInBlock = _orderbook.getDurationInBlock();
+        require(durationInBlock < block.number - _initializationBlock, "Not expired");
+        _;
     }
 
-    function viewInitializationBlock() external view override returns (uint256) {
-        return initializationBlock;
+    function getSeller() external view override returns (address) {
+        return _seller;
     }
 
-    function getOptn() internal view returns (Optn memory) {
-        return optn;
+    function getBuyer() external view override returns (address) {
+        return _buyer;
     }
 
-    function initializeBlock() internal {
-        require(initializationBlock == 0);
-        initializationBlock = block.number;
+    function getOrder() external view override returns (Order memory) {
+        return Order(_optn, _seller, _buyer, _initializationBlock);
     }
 
-    function withdraw(
+    function getStatus() external view override returns(Status) {
+        return _status;
+    }
+
+    function escrow() external override onlySeller onlyInit {
+        uint256 amount = _orderbook.getAmount();
+        require(amount > 0, 'Amount: amount should be > 0');
+
+        IERC20 escrowToken =_getEscrowToken();
+        
+        bool response = _deposit(msg.sender, address(this), amount, escrowToken);
+        require(response == true, "deposit failed");
+        _status = Status.ESCROWED;
+    }
+
+    function cancel() external override onlySeller onlyNullBuyer onlyEscrowed {
+        IERC20 escrowToken = _getEscrowToken();
+
+        uint256 contractBalance = escrowToken.balanceOf(address(this));
+        require(contractBalance > 0, 'Balance: zero balance in contract');
+
+        bool response = _withdraw(_seller, contractBalance, escrowToken);
+        require(response == true, "withdraw failed");
+        _status = Status.CLOSED;
+    }
+
+    function buy() external override onlyNullBuyer onlyEscrowed {
+        IERC20 baseCurrency = _orderbook.getBaseCurrency();
+
+        bool response = _deposit(msg.sender, _seller, _optn.premium, baseCurrency);
+        require(response == true, "deposit failed");
+        _setBuyer();
+    }
+
+    function expire() external override onlySeller onlyBought onlyExpired {
+        IERC20 escrowToken = _getEscrowToken();
+
+        uint256 contractBalance = escrowToken.balanceOf(address(this));
+        require(contractBalance > 0, 'Balance: zero balance in contract');
+
+        bool response = _withdraw(_seller, contractBalance, escrowToken);
+        require(response == true, "withdraw failed");
+        _status = Status.CLOSED;
+    }
+
+    function _setBuyer() private {
+        _initializationBlock = block.number;
+        _buyer = msg.sender;
+        _status = Status.ESCROWED;
+    }
+
+    function _getEscrowToken() private view returns(IERC20 escrowToken) {
+        if(_optionType == OptionType.PUT ) {
+            return _orderbook.getToken();
+        } else if (_optionType == OptionType.CALL) {
+            return _orderbook.getBaseCurrency();
+        }
+    }
+
+    function _withdraw(
         address to,
         uint256 amount,
         IERC20 token
-    ) internal {
-        token.transfer(to, amount);
+    ) private returns(bool) {
+        bool response = token.transfer(to, amount);
+        require(response == true, "transfer failed");
+        return true;
     }
 
-    function deposit(
+    function _deposit(
         address from,
         address to,
         uint256 amount,
         IERC20 token
-    ) internal {
+    ) private returns(bool) {
         _allownace(from, amount, token);
-        token.transferFrom(from, to, amount);
+        bool response = token.transferFrom(from, to, amount);
+        require(response == true, "transfer from faield");
+        return true;
     }
 
     function _allownace(
@@ -98,46 +163,5 @@ contract Option is IOption {
     ) private view {
         uint256 allowance = token.allowance(from, address(this));
         require(allowance >= amount, 'Permission: Allowance != amount');
-    }
-
-    function escrow(uint256 funds) external override onlySeller {
-        require(funds > 0, 'Amount: amount should be > 0');
-
-        IERC20 token = _orderbook.getToken();
-
-        deposit(msg.sender, address(this), funds, token);
-        emit Escrow(address(this), funds);
-    }
-
-    function terminate() external override onlySeller onlyNullBuyer {
-        IERC20 token = _orderbook.getToken();
-
-        uint256 contractBalance = token.balanceOf(address(this));
-        require(contractBalance > 0, 'Balance: zero balance in contract');
-
-        withdraw(seller, contractBalance, token);
-        emit Terminate(address(this));
-    }
-
-    function payPremium() external override onlyNullBuyer {
-        // check if contract have escrow
-        IERC20 baseCurrency = _orderbook.getBaseCurrency();
-        deposit(msg.sender, seller, optn.premium, baseCurrency);
-        setBuyer();
-        initializeBlock();
-        emit Premium(address(this));
-    }
-
-    function expire() external override onlySeller {
-        uint256 durationInBlock = _orderbook.getDurationInBlock();
-        require(durationInBlock < block.number - initializationBlock);
-
-        IERC20 token = _orderbook.getToken();
-
-        uint256 contractBalance = token.balanceOf(address(this));
-        require(contractBalance > 0, 'Balance: zero balance in contract');
-
-        withdraw(seller, contractBalance, token);
-        emit Expire(address(this));
     }
 }

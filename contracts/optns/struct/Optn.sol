@@ -25,3 +25,7 @@ struct OrderBookStandard {
 }
 
 enum OptionType {PUT, CALL}
+
+enum Status {
+    INIT, ESCROWED, BOUGHT, CLOSED 
+}
