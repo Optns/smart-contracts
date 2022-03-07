@@ -1,15 +1,15 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
 contract TestOptn is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpgradeable {
     function initialize() public initializer {
         __Ownable_init();
-        __ERC20_init("Test Option", "TOPTN");
+        __ERC20_init('Test Option', 'TOPTN');
         __UUPSUpgradeable_init();
     }
 
@@ -18,10 +18,10 @@ contract TestOptn is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUp
     }
 
     function mint() public {
-        _mint(msg.sender, 1000);
+        _mint(msg.sender, 100000000000);
     }
 
     function mintForExchange() public {
-        _mint(msg.sender, 10000000);
+        _mint(msg.sender, 100000000000);
     }
 }

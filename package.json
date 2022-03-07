@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha",
+    "test": "hardhat test",
+    "compile": "hardhat compile",
     "ganache": "ganache-cli --networkId $npm_package_config_ganache_networkId --gasLimit $npm_package_config_ganache_gasLimit --gasPrice $npm_package_config_ganache_gasPrice --mnemonic \"$MNEMONIC\""
   },
   "config": {
@@ -28,6 +29,9 @@
     "hardhat": "^2.8.2",
     "hardhat-gas-reporter": "^1.0.7",
     "mocha": "^9.1.4",
-    "web3": "^1.7.0"
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.7",
+    "solhint-plugin-prettier": "^0.0.5"
   }
 }

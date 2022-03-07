@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IERC20.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import './../interface/IERC20.sol';
+import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
 
 struct Optn {
     uint256 premium;
@@ -17,11 +17,15 @@ struct Order {
 }
 
 struct OrderBookStandard {
-    address sellPutImp;
-    address sellCallImp;
+    address implementation;
     address baseCurrency;
-    address oracle;
     address token;
     uint256 amount;
     uint256 durationInBlock;
+}
+
+enum OptionType {PUT, CALL}
+
+enum Status {
+    INIT, ESCROWED, BOUGHT, CLOSED 
 }
