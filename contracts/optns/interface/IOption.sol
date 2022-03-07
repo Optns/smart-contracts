@@ -14,7 +14,9 @@ interface IOption {
     
     function getBuyer() external view returns (address);
 
-    function getOrder() external view returns (Order memory);
+    function getOrder() external view returns (Optn memory);
+
+    function getInitializationBlock() external view returns(uint256);
 
     function getStatus() external view returns(Status);
 
@@ -25,4 +27,6 @@ interface IOption {
     function buy() external;
 
     function expire() external;
+
+    function execute() external;
 }

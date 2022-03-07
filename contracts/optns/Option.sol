@@ -71,8 +71,12 @@ contract Option is IOption, Initializable {
         return _buyer;
     }
 
-    function getOrder() external view override returns (Order memory) {
-        return Order(_optn, _seller, _buyer, _initializationBlock);
+    function getOrder() external view override returns (Optn memory) {
+        return _optn;
+    }
+
+    function getInitializationBlock() external view override returns(uint256) {
+        return _initializationBlock;
     }
 
     function getStatus() external view override returns(Status) {
@@ -109,7 +113,7 @@ contract Option is IOption, Initializable {
         _setBuyer();
     }
 
-    function expire() external override onlySeller onlyBought onlyExpired {
+    function expire() external override onlyBought onlyExpired {
         IERC20 escrowToken = _getEscrowToken();
 
         uint256 contractBalance = escrowToken.balanceOf(address(this));
@@ -120,10 +124,14 @@ contract Option is IOption, Initializable {
         _status = Status.CLOSED;
     }
 
+    function execute() external override onlyBuyer onlyBought {
+        
+    }
+
     function _setBuyer() private {
         _initializationBlock = block.number;
         _buyer = msg.sender;
-        _status = Status.ESCROWED;
+        _status = Status.BOUGHT;
     }
 
     function _getEscrowToken() private view returns(IERC20 escrowToken) {

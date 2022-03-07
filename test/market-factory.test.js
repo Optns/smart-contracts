@@ -45,7 +45,7 @@ before('contract factory', async () => {
     baseCurrency: testUSD.address,
     token: testOptn.address,
     amount: 2121212,
-    durationInBlock: 312321313,
+    durationInBlock: 1,
   }
 })
 

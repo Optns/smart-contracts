@@ -37,8 +37,8 @@ describe('test tokens', () => {
   describe('mint tokens', () => {
     let ownerTUSDInitialBalance
     let OnwerTOPTNInitialBalance
-    const mintTUSDAmount = 10000
-    const mintTOPTNAmount = 1000
+    const mintTUSDAmount = 100000000000
+    const mintTOPTNAmount = 100000000000
 
     beforeEach(async () => {
       ownerTUSDInitialBalance = await testUSD.balanceOf(owner.address)
