@@ -1,19 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import './../struct/Optn.sol';
+import './../lib/SharedStructs.sol';
 
 interface IOptionFactory {
-    function __optionFactory_init(OrderBookStandard memory orderBookStandard) external;
 
-    function getToken() external view returns (IERC20);
+    function __optionFactory_init() external;
+    
+    function updateOwner(address owner) external;
 
-    function getBaseCurrency() external view returns (IERC20);
+    function updateOrderBookStandard(SharedStructs.OrderbookStandard memory orderbookStandard) external;
 
-    function getAmount() external view returns (uint256);
-
-    function getDurationInBlock() external view returns (uint256);
-
-    function getOrderBookStandard() external view returns (OrderBookStandard memory);
-
-    function cloneOptionContract(Optn memory optn, address seller, OptionType optionType) external;
+    function cloneOptionContract(SharedStructs.Option memory option) external;
 }

@@ -4,22 +4,77 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import './interface/IOrderBookfactory.sol';
 import './interface/IOptionFactory.sol';
-import './struct/Optn.sol';
+import './lib/SharedStructs.sol';
 
-contract OrderBookFactory is Initializable {
+contract OrderBookFactory is IOrderBookFactory, Initializable {
+    
     address private _optionFactory;
+    address private _gov;
 
-    function __orderBookFactory_init(address optionFactory) external initializer {
-        _optionFactory = optionFactory;
+    modifier onlyGov {
+        require(msg.sender == _gov);
+        _;
     }
 
-    event OrderBookCreated(address orderBookAddress, address indexed token, address indexed baseCurrency);
+    mapping(bytes32 => address) private markets;
 
-    function createMarket(OrderBookStandard memory orderBookStandard) external {
-        address orderBookAddress = ClonesUpgradeable.clone(_optionFactory);
+    function __orderBookFactory_init(address optionFactory) external override initializer {
+        _optionFactory = optionFactory;
+        _gov = msg.sender;
+    }
+
+    function getGov() external view override returns(address gov) {
+        gov = _gov;
+    }
+
+    function getOptionFactory() external view override returns(address optionFactory) {
+        optionFactory = _optionFactory;
+    }
+
+    function changeGov(address gov) external override onlyGov{
+        _gov = gov;
+    }
+
+    function changeOptionFactory(address optionFactoryAddress) external override onlyGov {
+        _optionFactory = optionFactoryAddress;
+    }
+
+    function updateOrderBookStandard(
+        SharedStructs.OrderbookStandard memory orderbookStandard,
+        address orderbookAddress) external override onlyGov {
+        IOptionFactory optionFactory = IOptionFactory(orderbookAddress);
+        optionFactory.updateOrderBookStandard(orderbookStandard);
+    }
+
+    function createMarket(
+        SharedStructs.OrderbookStandard memory orderbookStandard) external override onlyGov {
+        bytes32 marketHash = _createTokenPairHash(orderbookStandard.token1, orderbookStandard.token2);
+        require(_validMarket(marketHash));
+        require(_powAmountValid(orderbookStandard.amountPow));
+
+        address orderBookAddress = _createClone(orderbookStandard);
+        markets[marketHash] = orderBookAddress;
+    }
+
+    function _createClone(SharedStructs.OrderbookStandard memory orderbookStandard) private returns(address orderBookAddress){
+        orderBookAddress = ClonesUpgradeable.clone(_optionFactory);
         IOptionFactory optionFactory = IOptionFactory(orderBookAddress);
-        optionFactory.__optionFactory_init(orderBookStandard);
-        emit OrderBookCreated(orderBookAddress, orderBookStandard.token, orderBookStandard.baseCurrency);
+        optionFactory.__optionFactory_init();
+        optionFactory.updateOrderBookStandard(orderbookStandard);
+    }
+
+    function _createTokenPairHash(address token1, address token2) private pure returns(bytes32 tokenPairHash) {
+        tokenPairHash = keccak256(abi.encodePacked(token1, token2));
+    }
+
+    function _validMarket(bytes32 tokenPairHash) private view returns(bool){
+        return markets[tokenPairHash] == address(0);
+    }
+
+    function _powAmountValid(uint amountPow) private pure returns(bool){
+        require(amountPow < 32);
+        return true;
     }
 }

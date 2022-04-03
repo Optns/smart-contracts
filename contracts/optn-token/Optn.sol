@@ -5,7 +5,7 @@ import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-
+ 
 contract Optn is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableUpgradeable {
     function initialize() public initializer {
         __Ownable_init();
