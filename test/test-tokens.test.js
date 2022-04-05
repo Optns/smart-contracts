@@ -1,5 +1,6 @@
 const { ethers, upgrades } = require('hardhat')
 const { expect } = require('chai')
+const { BigNumber } = require('ethers')
 
 describe('test tokens', () => {
   let TestUSD
@@ -37,8 +38,8 @@ describe('test tokens', () => {
   describe('mint tokens', () => {
     let ownerTUSDInitialBalance
     let OnwerTOPTNInitialBalance
-    const mintTUSDAmount = 100000000000
-    const mintTOPTNAmount = 100000000000
+    const mintTUSDAmount = ethers.BigNumber.from('1000000000000000000000000')
+    const mintTOPTNAmount = ethers.BigNumber.from('1000000000000000000000000')
 
     beforeEach(async () => {
       ownerTUSDInitialBalance = await testUSD.balanceOf(owner.address)

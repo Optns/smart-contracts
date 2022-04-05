@@ -18,7 +18,7 @@ contract OrderBookFactory is IOrderBookFactory, Initializable {
         _;
     }
 
-    mapping(bytes32 => address) private markets;
+    mapping(bytes32 => address) private _markets;
 
     function __orderBookFactory_init(address optionFactory) external override initializer {
         _optionFactory = optionFactory;
@@ -31,6 +31,10 @@ contract OrderBookFactory is IOrderBookFactory, Initializable {
 
     function getOptionFactory() external view override returns(address optionFactory) {
         optionFactory = _optionFactory;
+    }
+
+    function getMarketAddress(bytes32 pairHash) external view override returns(address marketAddress) {
+        marketAddress = _markets[pairHash];
     }
 
     function changeGov(address gov) external override onlyGov{
@@ -50,12 +54,12 @@ contract OrderBookFactory is IOrderBookFactory, Initializable {
 
     function createMarket(
         SharedStructs.OrderbookStandard memory orderbookStandard) external override onlyGov {
-        bytes32 marketHash = _createTokenPairHash(orderbookStandard.token1, orderbookStandard.token2);
+        bytes32 marketHash = _createTokenPairHash(orderbookStandard.tokenIn, orderbookStandard.tokenOut);
         require(_validMarket(marketHash));
         require(_powAmountValid(orderbookStandard.amountPow));
 
         address orderBookAddress = _createClone(orderbookStandard);
-        markets[marketHash] = orderBookAddress;
+        _markets[marketHash] = orderBookAddress;
     }
 
     function _createClone(SharedStructs.OrderbookStandard memory orderbookStandard) private returns(address orderBookAddress){
@@ -65,12 +69,12 @@ contract OrderBookFactory is IOrderBookFactory, Initializable {
         optionFactory.updateOrderBookStandard(orderbookStandard);
     }
 
-    function _createTokenPairHash(address token1, address token2) private pure returns(bytes32 tokenPairHash) {
-        tokenPairHash = keccak256(abi.encodePacked(token1, token2));
+    function _createTokenPairHash(address tokenIn, address tokenOut) private pure returns(bytes32 tokenPairHash) {
+        tokenPairHash = keccak256(abi.encodePacked(tokenIn, tokenOut));
     }
 
     function _validMarket(bytes32 tokenPairHash) private view returns(bool){
-        return markets[tokenPairHash] == address(0);
+        return _markets[tokenPairHash] == address(0);
     }
 
     function _powAmountValid(uint amountPow) private pure returns(bool){

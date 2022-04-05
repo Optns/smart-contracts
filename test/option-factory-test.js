@@ -3,7 +3,7 @@ const { ethers } = require('hardhat')
 const optionTest = require('./option-test')
 const { escrowTest, cancel } = require('./transactions-test')
 
-const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
+const optionFactoryTest = (orderbook, orderBookStandard, owner) => {
   return () => {
     let Option
 
@@ -12,51 +12,41 @@ const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
     })
 
     it('initialize sell option factory again failed', async () => {
-      const invalidOrderBookStandard = { ...orderBookStandard, amount: 0 }
       orderbook
-        .__optionFactory_init(invalidOrderBookStandard)
+        .__optionFactory_init(orderBookStandard)
         .then(() => {
           expect(true).equal(false)
         })
         .catch((error) => {
-          const errorMessage =
-            "VM Exception while processing transaction: reverted with reason string 'Initializable: contract is already initialized'"
+          const errorMessage = 'cannot override "implementation","tokenOut","tokenIn","amountPow" (operation="overrides", overrides=["implementation","tokenOut","tokenIn","amountPow"], code=UNSUPPORTED_OPERATION, version=contracts/5.5.0)'
           expect(error.message).to.equal(errorMessage)
         })
     })
 
-    it('get token from sell option factory', async () => {
-      const token = await orderbook.getToken()
-      expect(token.toLowerCase()).to.equal(orderBookStandard.token.toLowerCase())
-    })
-
-    it('get base currency from sell option factory', async () => {
-      const baseCurrency = await orderbook.getBaseCurrency()
-      expect(baseCurrency.toLowerCase()).to.equal(orderBookStandard.baseCurrency.toLowerCase())
-    })
-
-    it('get amount from sell option factory', async () => {
-      const amount = await orderbook.getAmount()
-      expect(amount).to.equal(orderBookStandard.amount)
-    })
-
-    it('duration in block from sell option factory', async () => {
-      const durationInBlock = await orderbook.getDurationInBlock()
-      expect(durationInBlock).to.equal(orderBookStandard.durationInBlock)
-    })
-
-    it('order book standard from sell option factory', async () => {
-      const obs = await orderbook.getOrderBookStandard()
-      expect(obs.token.toLowerCase()).to.equal(orderBookStandard.token.toLowerCase())
-      expect(obs.baseCurrency.toLowerCase()).to.equal(orderBookStandard.baseCurrency.toLowerCase())
-      expect(obs.amount).equal(orderBookStandard.amount)
-      expect(obs.durationInBlock).equal(orderBookStandard.durationInBlock)
+    describe('check orderbook standards', () => {
+      let orderbookStandardResponse;
+      before( async () => {
+        orderbookStandardResponse = await orderbook.getOrderbookStandard()
+      })
+      it("match tokenIn", () => {
+        expect(orderbookStandardResponse.tokenIn).to.equal(orderBookStandard.tokenIn)
+      })
+      it("match tokenOut", () => {
+        expect(orderbookStandardResponse.tokenOut).to.equal(orderBookStandard.tokenOut)
+      })
+      it("match implementation", () => {
+        expect(orderbookStandardResponse.implementation).to.equal(orderBookStandard.implementation)
+      })
+      it("match amountPow", () => {
+        expect(orderbookStandardResponse.amountPow).to.equal(orderBookStandard.amountPow)
+      })
     })
 
     describe('Clone orderbook', () => {
       const optn = {
         premium: 400,
         strikePrice: 4000,
+        duration: 0
       }
 
       let optionContract, args
@@ -66,6 +56,7 @@ const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
       let buyer
 
       let initialContractBalance
+      let optionStandard
 
       before(async () => {
         // get contract factory
@@ -75,9 +66,8 @@ const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
 
         OptionFactory = await ethers.getContractFactory('OptionFactory')
         optionFactory = OptionFactory.attach(orderbook.address)
-        baseToken = TestUSD.attach(await optionFactory.getBaseCurrency())
-        token = TestOptn.attach(await optionFactory.getToken())
-        amount = await optionFactory.getAmount()
+        baseToken = TestUSD.attach(orderBookStandard.tokenOut)
+        token = TestOptn.attach(orderBookStandard.tokenIn)
 
         await token.mint()
         await baseToken.mint()
@@ -87,24 +77,20 @@ const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
       })
 
       beforeEach(async () => {
-        const transaction = await orderbook.cloneOptionContract(optn, owner.address, optionType)
+        const transaction = await orderbook.cloneOptionContract(optn)
         const receipt = await transaction.wait()
 
         const event = receipt.events.filter((event) => {
-          return event.event === 'Option'
+          return event.event === 'OptionEvent'
         })[0]
 
         args = event.args
         optionContract = await Option.attach(args[0])
+        optionStandard = await optionContract.getOptionStandard()
 
         // escrow
-        initialContractBalance =
-          optionType === 0
-            ? await token.balanceOf(optionContract.address)
-            : await baseToken.balanceOf(optionContract.address)
-        optionType === 0
-          ? await token.approve(optionContract.address, amount)
-          : await baseToken.approve(optionContract.address, amount)
+        initialContractBalance = await token.balanceOf(optionContract.address)
+        await token.approve(optionContract.address, optionStandard.amount)
 
         await optionContract.escrow()
       })
@@ -115,25 +101,21 @@ const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
             expect(args[1].toLowerCase()).to.equal(owner.address.toLowerCase())
           })
 
-          it(`option type is ${optionType === 0 ? 'PUT' : 'CALL'}`, () => {
-            expect(args[2]).equal(optionType)
-          })
-
-          it(`${optionType === 0 ? 'PUT' : 'CALL'} option address is valid`, () => {
+          it(`option address is valid`, () => {
             expect(ethers.utils.isAddress(args[0])).equal(true)
             expect(args[0]).to.not.equal('0x0000000000000000000000000000000000000000')
           })
 
           describe(
-            `${optionType === 0 ? 'PUT' : 'CALL'} option contract`,
-            optionTest(optionContract, optn, owner, orderbook.address, optionType)
+            `option contract`,
+            optionTest(optionContract, optn, owner, optionStandard)
           )
         })
       })
-      it(`escrow ${optionType === 0 ? 'PUT' : 'CALL'} option contract`, () => {
+      it(`escrow option contract`, () => {
         describe(
-          `Escrow ${optionType === 0 ? 'PUT' : 'CALL'} option contract`,
-          escrowTest(optionContract, initialContractBalance, amount, optionType === 0 ? token : baseToken, baseToken, buyer, owner)
+          `Escrow option contract`,
+          escrowTest(optionContract, initialContractBalance, optionStandard.amount, token, baseToken, buyer, owner)
         )
       })
 
@@ -151,10 +133,10 @@ const optionFactoryTest = (orderbook, orderBookStandard, owner, optionType) => {
           })
       })
 
-      it(`cancel ${optionType === 0 ? 'PUT' : 'CALL'} option contract`, () => {
+      it(`cancel option contract`, () => {
         describe(
-          `cancelling ${optionType === 0 ? 'PUT' : 'CALL'} contract`,
-          cancel(optionContract, amount, optionType === 0 ? token : baseToken, owner)
+          `cancelling  contract`,
+          cancel(optionContract, optionStandard.amount, token, owner)
         )
       })
     })

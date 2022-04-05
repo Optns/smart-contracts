@@ -8,8 +8,8 @@ library SharedStructs {
 
     struct OrderbookStandard {
         address implementation;
-        address token1;
-        address token2;
+        address tokenIn;
+        address tokenOut;
         uint256 amountPow;
     }
 

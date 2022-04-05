@@ -8,6 +8,8 @@ interface IOrderBookFactory {
 
     function getGov() external returns(address gov);
 
+    function getMarketAddress(bytes32 pairHash) external returns(address marketAddress);
+
     function changeGov(address gov) external;
 
     function getOptionFactory() external returns(address optionFactory);

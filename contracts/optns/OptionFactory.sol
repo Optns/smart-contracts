@@ -24,7 +24,11 @@ contract OptionFactory is IOptionFactory, Initializable {
         _owner = msg.sender;
     }
 
-    function updateOrderBookStandard(SharedStructs.OrderbookStandard memory orderBookStandard) external onlyAdmin {
+    function getOrderbookStandard() external view override returns(SharedStructs.OrderbookStandard memory orderbookStandard) {
+        orderbookStandard = _orderbookStandard;
+    }
+
+    function updateOrderBookStandard(SharedStructs.OrderbookStandard memory orderBookStandard) external override onlyAdmin {
         _orderbookStandard = orderBookStandard;
     }
 
@@ -37,8 +41,8 @@ contract OptionFactory is IOptionFactory, Initializable {
         IOption optionContract = IOption(optionAddress);
 
         SharedStructs.OptionStandard memory optionStandard;
-        optionStandard.tokenIn = _orderbookStandard.token1;
-        optionStandard.tokenOut = _orderbookStandard.token2;
+        optionStandard.tokenIn = _orderbookStandard.tokenIn;
+        optionStandard.tokenOut = _orderbookStandard.tokenOut;
         optionStandard.amount = 10 ** (18 + _orderbookStandard.amountPow);
 
         optionContract.__option_init(option, msg.sender, optionStandard);

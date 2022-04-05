@@ -23,8 +23,9 @@ const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID
  */
 module.exports = {
   solidity: '0.8.2',
+  defaultNetwork: "hardhat",
   networks: {
-    development: {
+    hardhat: {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "1337"        // Any network (default: none)

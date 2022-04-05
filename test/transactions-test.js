@@ -30,7 +30,7 @@ const escrow = (optionContract, initialContractBalance, amount, escrowToken, bas
 
     describe('Buy option', buy(optionContract, baseToken, buyer, amount, seller))
 
-    describe('Expire option', expire(optionContract, escrowToken, seller, amount))
+    // describe('Expire option', expire(optionContract, escrowToken, seller, amount))
   }
 }
 
@@ -59,10 +59,10 @@ const buy = (optionContract, baseToken, buyer, amount, seller) => {
       expect(sellerBaseTokenAfterPrice.toString()).equal(sellerBaseTokenInitialPrice.add(premium).toString())
     })
 
-    it('new initializationBlock is set', async () => {
-      const initializationBlock = await optionContract.getInitializationBlock()
-      expect(initializationBlock).equal(blockNumber)
-    })
+    // it('new initializationBlock is set', async () => {
+    //   const initializationBlock = await optionContract.getInitializationBlock()
+    //   expect(initializationBlock).equal(blockNumber)
+    // })
   }
 }
 

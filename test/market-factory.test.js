@@ -42,55 +42,40 @@ before('contract factory', async () => {
 
   orderBookStandard = {
     implementation: option.address,
-    baseCurrency: testUSD.address,
-    token: testOptn.address,
-    amount: 2121212,
-    durationInBlock: 1,
+    tokenOut: testUSD.address,
+    tokenIn: testOptn.address,
+    amountPow: 1,
   }
 })
 
 describe('Orderbook factory', () => {
   let contract
-  let args
+  let contractAddress
 
   before(async () => {
     const transaction = await orderBookFactory.createMarket(orderBookStandard)
-    const receipt = await transaction.wait()
+    await transaction.wait()
 
-    const event = receipt.events.filter((event) => {
-      return event.event === 'OrderBookCreated'
-    })[0]
+    const pair = pairHash(orderBookStandard.tokenIn, orderBookStandard.tokenOut)
 
-    args = event.args
-    contract = await OptionFactory.attach(args[0])
+   contractAddress = await orderBookFactory.getMarketAddress(pair)
+    
+    contract = await OptionFactory.attach(contractAddress)
   })
 
   it('market address is valid', () => {
-    expect(ethers.utils.isAddress(args[0])).to.equal(true)
-    expect(args[0]).to.not.equal('0x0000000000000000000000000000000000000000')
-  })
-
-  it('market clone event token', () => {
-    expect(args[1].toLowerCase()).to.equal(
-      orderBookStandard.token.toLowerCase(),
-    )
-  })
-
-  it('market clone event base currency', () => {
-    expect(args[2].toLowerCase()).to.equal(
-      orderBookStandard.baseCurrency.toLowerCase(),
-    )
+    expect(ethers.utils.isAddress(contractAddress)).to.equal(true)
+    expect(contractAddress).to.not.equal('0x0000000000000000000000000000000000000000')
   })
 
   it('attach sell option factory to market clone address', async () => {
     describe(
-      'Put market factory',
-      optionFactoryTest(contract, orderBookStandard, owner, OptionType.PUT),
-    )
-
-    describe(
-      'Call market factory',
-      optionFactoryTest(contract, orderBookStandard, owner, OptionType.CALL),
+      'market factory',
+      optionFactoryTest(contract, orderBookStandard, owner),
     )
   })
 });
+
+const pairHash = (tokenIn, tokenOut) => {
+  return ethers.utils.solidityKeccak256(["bytes20", "bytes20"], [tokenIn, tokenOut])
+}
